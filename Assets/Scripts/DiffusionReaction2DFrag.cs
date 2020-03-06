@@ -45,6 +45,7 @@ public class DiffusionReaction2DFrag : MonoBehaviour
     private Material visualization_mat;
     public Material SimulationShader;
     public Material DrawShader;
+    public Material ClearShader;
 
     private int kernel;
 
@@ -97,14 +98,14 @@ public class DiffusionReaction2DFrag : MonoBehaviour
     }
 
     public void SetSimulationMode(int value)
-    {
+    {       
         SelectedMode = (SimulationModes)value;
     }
 
     private RenderTexture InitializeTexture()
     {
-        var tex = new RenderTexture(_COLS, _ROWS, 0, RenderTextureFormat.RGFloat);
-        tex.enableRandomWrite = true;
+        var tex = new RenderTexture(_COLS, _ROWS, 0, RenderTextureFormat.ARGBFloat);
+        tex.wrapMode = TextureWrapMode.Clamp;
         tex.Create();
 
         return tex;
@@ -112,7 +113,7 @@ public class DiffusionReaction2DFrag : MonoBehaviour
 
     private void AreaInitializer(bool random = false, bool clear = false)
     {
-        float[] data = new float[_ROWS * _COLS * 2];
+        float[] data = new float[_ROWS * _COLS * 4];
         int i = 0;
 
         Vector2 point = new Vector2(_ROWS / 2, _COLS / 2);
@@ -125,6 +126,8 @@ public class DiffusionReaction2DFrag : MonoBehaviour
                 {
                     data[i] = BGValues.x;
                     data[i + 1] = BGValues.y;
+                    data[i + 2] = 0;
+                    data[i + 3] = 0;
                     continue;
                 }
 
@@ -135,11 +138,15 @@ public class DiffusionReaction2DFrag : MonoBehaviour
                     {
                         data[i] = Random.Range(0.0f, 1.0f);
                         data[i + 1] = Random.Range(0.0f, 1.0f);
+                        data[i + 2] = 0;
+                        data[i + 3] = 0;
                     }
                     else
                     {
                         data[i] = SeedValues.x;
                         data[i + 1] = SeedValues.y;
+                        data[i + 2] = 0;
+                        data[i + 3] = 0;
                     }
                 }
                 else
@@ -148,18 +155,22 @@ public class DiffusionReaction2DFrag : MonoBehaviour
                     {
                         data[i] = Random.Range(0.0f, 1.0f);
                         data[i + 1] = Random.Range(0.0f, 1.0f);
+                        data[i + 2] = 0;
+                        data[i + 3] = 0;
                     }
                     else
                     {
                         data[i] = BGValues.x;
                         data[i + 1] = BGValues.y;
+                        data[i + 2] = 0;
+                        data[i + 3] = 0;
                     }
                 }
 
-                i += 2;
+                i +=4;
             }
         }
-        Texture2D tex = new Texture2D(_COLS, _ROWS, TextureFormat.RGFloat, false, false);
+        Texture2D tex = new Texture2D(_COLS, _ROWS, TextureFormat.RGBAFloat, false, false);
         tex.SetPixelData<float>(data, 0);
         tex.Apply();
 
@@ -204,7 +215,10 @@ public class DiffusionReaction2DFrag : MonoBehaviour
 
     public void ClearTexture()
     {
-        AreaInitializer(clear: true);
+        DrawShader.SetColor("_ClearColor", new Color(BGValues.x, BGValues.y, 0, 0));
+        Graphics.Blit(_qBuffer0, _qBuffer1, ClearShader);
+
+        SwapBuffers();
     }
 
     // Start is called before the first frame update
@@ -223,7 +237,7 @@ public class DiffusionReaction2DFrag : MonoBehaviour
 
         visualization_mat.SetTexture("_Q", _qBuffer0);
     }
-    private void MouseDraw()
+    public void MouseDraw()
     {
 
             DrawShader.SetFloat("_ROWS", _ROWS);
@@ -249,10 +263,6 @@ public class DiffusionReaction2DFrag : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetMouseButton(0))
-        {
-            MouseDraw();
-        }
         Step();
     }
 

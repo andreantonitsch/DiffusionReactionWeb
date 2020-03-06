@@ -19,10 +19,22 @@
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 5.0
 
             #include "UnityCG.cginc"
-            #include "Include/misc_defines.hlsl"
+
+            #define aspect_ratio_factor  ( _ScreenParams.xy / _ScreenParams.y )
+
+            // Returns (row, col) on xy,  returns cell internal uv on zw
+            float4 cell_coordinates(float2 uv, float2 cells)
+            {
+                float4 coords = 0.0f;
+                float2 stretched = uv * cells;
+
+                coords.xy = trunc(stretched);
+                coords.zw = frac(stretched);
+
+                return coords;
+            }
 
             struct appdata
             {

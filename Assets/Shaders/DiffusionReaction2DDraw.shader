@@ -19,7 +19,6 @@
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 5.0
 
             #include "UnityCG.cginc"
             #include "Include/misc_defines.hlsl"

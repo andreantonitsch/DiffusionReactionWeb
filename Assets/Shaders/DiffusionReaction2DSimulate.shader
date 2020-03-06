@@ -21,10 +21,9 @@
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 5.0
+			#define aspect_ratio_factor  ( _ScreenParams.xy / _ScreenParams.y )
 
             #include "UnityCG.cginc"
-            #include "Include/misc_defines.hlsl"
 
             struct appdata
             {
@@ -39,6 +38,18 @@
                 float4 vertex : SV_POSITION;
             };
 
+			// Returns (row, col) on xy,  returns cell internal uv on zw
+			float4 cell_coordinates(float2 uv, float2 cells)
+			{
+				float4 coords = 0.0f;
+				float2 stretched = uv * cells;
+
+				coords.xy = trunc(stretched);
+				coords.zw = frac(stretched);
+
+				return coords;
+			}
+
             sampler2D _MainTex, _RampTex;
             float4 _MainTex_ST;
 
@@ -46,12 +57,11 @@
 			float2 _DiffusionRatio;
 			float _F, _K, _DELTATIME;
 
-			
-			static const int2 cross_neighbors[4] = { int2(-1,-1), int2(1,1), int2(-1,1), int2(1,-1) };
-			static const int2 orto_neighbors[4] = { int2(1,0), int2(-1,0), int2(0,1), int2(0,-1) };
-			
 			float2 laplacian(uint2 id)
 			{
+				int2 cross_neighbors[4] = { int2(-1,-1), int2(1,1), int2(-1,1), int2(1,-1) };
+				int2 orto_neighbors[4] = { int2(1,0), int2(-1,0), int2(0,1), int2(0,-1) };
+
 				int2 id_ = int2(id);
 				int2 aspect = int2(_ROWS, _COLS);
 				float2 middle = 0.5f;
